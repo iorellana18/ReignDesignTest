@@ -1,5 +1,6 @@
 package com.example.ianorellana.reigndesigntest;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -20,6 +21,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,17 +42,18 @@ public class main extends AppCompatActivity {
 
     public void getData(){
         StringRequest stringRequest = new StringRequest(Request.Method.GET,
-                "http://hn.algolia.com/api/v1/search_by_date?query=android",
+                "https://hn.algolia.com/api/v1/search_by_date?query=android",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
+                        //Toast.makeText(getApplicationContext(),response,Toast.LENGTH_LONG).show();
                         setList(response);
                     }
                 },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        finish();
+                        Toast.makeText(getApplicationContext(),error.toString(),Toast.LENGTH_LONG).show();
                     }
                 }) {
         };
@@ -66,7 +69,9 @@ public class main extends AppCompatActivity {
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
+                Intent intent = new Intent(getApplicationContext(),webView.class);
+                intent.putExtra("url",items.get(position).getStory_url());
+                startActivity(intent);
             }
         });
 
@@ -82,7 +87,8 @@ public class main extends AppCompatActivity {
                 String story_title = item.getString("story_title");
                 String author = item.getString("author");
                 String created_at = item.getString("created_at");
-                Objeto objeto = new Objeto(story_title,author,created_at);
+                String story_url = item.getString("story_url");
+                Objeto objeto = new Objeto(story_title,author,created_at,story_url);
                 objetos.add(objeto);
             }
         }catch (JSONException e) {
