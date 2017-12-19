@@ -2,6 +2,7 @@ package com.example.ianorellana.reigndesigntest;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
@@ -29,15 +30,32 @@ import java.util.Map;
  * Created by ianorellana on 18-12-17.
  */
 
-public class main extends AppCompatActivity {
+public class main extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
     ListView list;
     listadapter adapter;
+    SwipeRefreshLayout swipeRefreshLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.listview);
-        getData();
+
+        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
+
+
+        swipeRefreshLayout.setOnRefreshListener(this);
+
+        swipeRefreshLayout.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        swipeRefreshLayout.setRefreshing(true);
+                                        getData();
+
+                                    }
+                                }
+        );
+
+
     }
 
     public void getData(){
@@ -46,8 +64,8 @@ public class main extends AppCompatActivity {
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        //Toast.makeText(getApplicationContext(),response,Toast.LENGTH_LONG).show();
                         setList(response);
+                        swipeRefreshLayout.setRefreshing(false);
                     }
                 },
                 new Response.ErrorListener() {
@@ -69,12 +87,19 @@ public class main extends AppCompatActivity {
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(getApplicationContext(),webView.class);
-                intent.putExtra("url",items.get(position).getStory_url());
-                startActivity(intent);
+                if(items.get(position).getStory_url().equals("null") && items.get(position).getUrl().equals("null")){
+                    Toast.makeText(getApplicationContext(),"Este artículo no posee url",Toast.LENGTH_LONG).show();
+                }else if(items.get(position).getStory_url().equals("null")){
+                    Intent intent = new Intent(getApplicationContext(), webView.class);
+                    intent.putExtra("url", items.get(position).getUrl());
+                    startActivity(intent);
+                }else {
+                    Intent intent = new Intent(getApplicationContext(), webView.class);
+                    intent.putExtra("url", items.get(position).getStory_url());
+                    startActivity(intent);
+                }
             }
         });
-
     }
 
     public ArrayList<Objeto> obtenerLista(String response){
@@ -85,16 +110,23 @@ public class main extends AppCompatActivity {
             for(int i=0;i<jsonArray.length();i++){
                 JSONObject item = jsonArray.getJSONObject(i);
                 String story_title = item.getString("story_title");
+                String title = item.getString("title");
                 String author = item.getString("author");
                 String created_at = item.getString("created_at");
                 String story_url = item.getString("story_url");
-                Objeto objeto = new Objeto(story_title,author,created_at,story_url);
+                String url = item.getString("url");
+                Objeto objeto = new Objeto(story_title,author,created_at,story_url,title,url);
                 objetos.add(objeto);
             }
         }catch (JSONException e) {
             System.out.println(e);
         }
         return objetos;
+    }
+
+    @Override
+    public void onRefresh() {
+        getData();
     }
 
 }
